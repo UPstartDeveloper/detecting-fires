@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Editor and OS
+.DS_Store
+.vscode
+
 # Distribution / packaging
 .Python
 build/
