@@ -1,3 +1,6 @@
+# Data wrangling and visualization imports
+import numpy as np
+import pandas as pd
 # Keras Imports
 import tensorflow as tf
 import keras
@@ -25,6 +28,16 @@ from keras.preprocessing.image import img_to_array
 from hyperopt import Trials, STATUS_OK, tpe
 from hyperas import optim
 from hyperas.distributions import choice, uniform
+# Import generator
+import util
+
+
+def data():
+    # get the data
+    df = pd.read_csv('Fire-Detection-Image-Dataset/fires.csv')
+    selector = np.random.rand(len(df)) < 0.75
+    df_train, df_test = df[selector], df[~selector]
+    return df_train, df_test
 
 
 def optimize_model():
@@ -51,8 +64,7 @@ def optimize_model():
     # Flatten the data
     model.add(Flatten())
     # Add 1 MLP Layer
-    model.add(Dense(1, activation=
-             {{choice('sigmoid', 'relu')}}))
+    model.add(Dense(1}))
     # Compile Model
     model.compile(loss=keras.losses.binary_crossentropy,
                   optimizer=
@@ -64,26 +76,21 @@ def optimize_model():
                            tf.keras.metrics.Precision(),
                            tf.keras.metrics.Recall()])
     # Train Model
-    result = model.fit_generator(generator=data_gen(df_train,
-                        batch_size={{choice(10, 20, 40)}}),
+    batch_size = {{choice([10, 20, 40])}}
+    result = model.fit_generator(generator=util.data_gen(df_train,
+                        batch_size=batch_size),
                         steps_per_epoch=len(df_train['label']) // batch_size,
-                        epochs={{choice(3, 5, 7)}},
-                        validation_data=data_gen(df_test, batch_size=batch_size),
+                        epochs={{choice([3, 5, 7])}},
+                        validation_data=util.data_gen(df_test, batch_size=batch_size),
                         validation_steps=len(df_test['label']) // batch_size, 
                         callbacks=[tensorboard])
     # Get Optimized results
     # get the highest validation metrics of the training epochs
-    val_acc, val_precision, val_recall = (
-        np.amax(result.history['val_acc']),
-        np.amax(result.history['val_precision']),
-        np.amax(result.history['val_recall'])
-    )
-    print('Best validation acc of epoch:', val_acc)
+    val_loss = np.amax(result.history['val_loss'])
+    print(f'Best validation acc of epoch: {(1-val_loss)}')
     return {
-        'loss': -val_acc,
-        'accuracy': val_acc,
-        'precision': val_precision,
-        'recall': val_recall,
+        'loss': val_loss,
+        'accuracy': 1-val_loss,
         'status': STATUS_OK,
         'model': model
     }
@@ -92,7 +99,9 @@ def optimize_model():
 if __name__ == "__main__":
     # find the best model!
     best_run, best_model = optim.minimize(model=optimize_model,
-                                        data=data_gen,
+                                        data=data,
                                         algo=tpe.suggest,
                                         max_evals=5,
                                         trials=Trials())
+    print("Best performing model chosen hyper-parameters:")
+    print(best_run)
