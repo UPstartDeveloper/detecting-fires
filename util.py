@@ -4,6 +4,18 @@ from keras.preprocessing.image import img_to_array
 import numpy as np
 import pandas as pd
 
+# choices for Kernel and pool size
+    kernel_sizes = [
+        (1, 1),
+        (2, 2),
+        (3, 3)
+    ]
+    pool_sizes = [
+        (1, 1),
+        (2, 2),
+        (3, 3),
+    ]
+
 def data_gen(df_gen, batch_size):
     """Generate batches of the dataset to train the model on, one subsection at a time.
        Credit goes to Milad Toutounchian for this implementation, originally found at:
